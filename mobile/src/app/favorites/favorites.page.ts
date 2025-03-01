@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { DoctorService } from '../services/doctor.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-favorites',
@@ -8,13 +9,18 @@ import { DoctorService } from '../services/doctor.service';
   styleUrls: ['./favorites.page.scss'],
   standalone: false,
 })
-export class FavoritesPage implements OnInit {
+export class FavoritesPage {
   favorites: any[] = [];
   loading: boolean = false;
 
-  constructor(private authService: AuthService, private doctorService: DoctorService) {}
+  constructor(
+    private authService: AuthService,
+    private doctorService: DoctorService,
+    private router: Router // Add Router for navigation
+  ) {}
 
-  ngOnInit() {
+  // Use ionViewWillEnter to reload favorites each time the page is visited
+  ionViewWillEnter() {
     this.loadFavorites();
   }
 
@@ -30,5 +36,10 @@ export class FavoritesPage implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  // Navigate to doctor profile when clicked
+  goToDoctorProfile(doctorId: number) {
+    this.router.navigate(['/doctor-profile'], { queryParams: { id: doctorId } });
   }
 }

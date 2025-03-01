@@ -8,7 +8,6 @@
 </ion-header>
 
 <ion-content class="ion-padding" fullscreen>
-  <!-- Pull-to-Refresh -->
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
     <ion-refresher-content 
       pullingIcon="chevron-down-outline" 
@@ -18,10 +17,8 @@
     </ion-refresher-content>
   </ion-refresher>
 
-  <!-- Loading Spinner -->
   <ion-spinner *ngIf="loading" name="crescent" color="primary" class="loading-spinner"></ion-spinner>
 
-  <!-- Ad Space -->
   <div class="ad-container" *ngIf="!loading">
     <ion-card class="ad-placeholder">
       <ion-card-content class="ion-text-center">
@@ -50,19 +47,57 @@
             <ion-select-option value="">All Specialties</ion-select-option>
             <ion-select-option value="Cardiology">Cardiology</ion-select-option>
             <ion-select-option value="Dentistry">Dentistry</ion-select-option>
+            <ion-select-option value="Dermatology">Dermatology</ion-select-option>
+            <ion-select-option value="Endocrinology">Endocrinology</ion-select-option>
+            <ion-select-option value="Gastroenterology">Gastroenterology</ion-select-option>
+            <ion-select-option value="Gynecology">Gynecology</ion-select-option>
+            <ion-select-option value="Neurology">Neurology</ion-select-option>
+            <ion-select-option value="Oncology">Oncology</ion-select-option>
+            <ion-select-option value="Orthopedics">Orthopedics</ion-select-option>
             <ion-select-option value="Pediatrics">Pediatrics</ion-select-option>
+            <ion-select-option value="Psychiatry">Psychiatry</ion-select-option>
+            <ion-select-option value="Urology">Urology</ion-select-option>
+            <ion-select-option value="Ophthalmology">Ophthalmology</ion-select-option>
+            <ion-select-option value="Otolaryngology">Otolaryngology (ENT)</ion-select-option>
+            <ion-select-option value="Pulmonology">Pulmonology</ion-select-option>
+            <ion-select-option value="Rheumatology">Rheumatology</ion-select-option>
+            <ion-select-option value="General Surgery">General Surgery</ion-select-option>
+            <ion-select-option value="Neurosurgery">Neurosurgery</ion-select-option>
+            <ion-select-option value="Plastic Surgery">Plastic Surgery</ion-select-option>
+            <ion-select-option value="Emergency Medicine">Emergency Medicine</ion-select-option>
           </ion-select>
         </ion-col>
         <ion-col size="6">
           <ion-select 
-            placeholder="City" 
+            placeholder="Governorate" 
             [(ngModel)]="selectedCity" 
             (ionChange)="filterDoctors()" 
             interface="popover">
-            <ion-select-option value="">All Cities</ion-select-option>
-            <ion-select-option value="Tunis">Tunis</ion-select-option>
-            <ion-select-option value="Sousse">Sousse</ion-select-option>
+            <ion-select-option value="">All Governorates</ion-select-option>
+            <ion-select-option value="Ariana">Ariana</ion-select-option>
+            <ion-select-option value="Béja">Béja</ion-select-option>
+            <ion-select-option value="Ben Arous">Ben Arous</ion-select-option>
+            <ion-select-option value="Bizerte">Bizerte</ion-select-option>
+            <ion-select-option value="Gabès">Gabès</ion-select-option>
+            <ion-select-option value="Gafsa">Gafsa</ion-select-option>
+            <ion-select-option value="Jendouba">Jendouba</ion-select-option>
+            <ion-select-option value="Kairouan">Kairouan</ion-select-option>
+            <ion-select-option value="Kasserine">Kasserine</ion-select-option>
+            <ion-select-option value="Kebili">Kebili</ion-select-option>
+            <ion-select-option value="Kef">Kef</ion-select-option>
+            <ion-select-option value="Mahdia">Mahdia</ion-select-option>
+            <ion-select-option value="Manouba">Manouba</ion-select-option>
+            <ion-select-option value="Medenine">Medenine</ion-select-option>
+            <ion-select-option value="Monastir">Monastir</ion-select-option>
+            <ion-select-option value="Nabeul">Nabeul</ion-select-option>
             <ion-select-option value="Sfax">Sfax</ion-select-option>
+            <ion-select-option value="Sidi Bouzid">Sidi Bouzid</ion-select-option>
+            <ion-select-option value="Siliana">Siliana</ion-select-option>
+            <ion-select-option value="Sousse">Sousse</ion-select-option>
+            <ion-select-option value="Tataouine">Tataouine</ion-select-option>
+            <ion-select-option value="Tozeur">Tozeur</ion-select-option>
+            <ion-select-option value="Tunis">Tunis</ion-select-option>
+            <ion-select-option value="Zaghouan">Zaghouan</ion-select-option>
           </ion-select>
         </ion-col>
       </ion-row>
@@ -76,9 +111,13 @@
   </div>
   <br>
 
-  <!-- Doctors List -->
   <ion-list class="doctors-list" *ngIf="!loading">
-    <ion-card *ngFor="let doctor of filteredDoctors" button (click)="viewDoctor(doctor)" class="doctor-card">
+    <ion-card 
+      *ngFor="let doctor of filteredDoctors" 
+      button 
+      [routerLink]="['/doctor-profile']" 
+      [queryParams]="{ id: doctor.id }" 
+      class="doctor-card">
       <ion-card-content class="doctor-content">
         <ion-avatar slot="start" class="large-avatar">
           <img [src]="doctor.image || (doctor.gender === 'Male' ? 'assets/default-male.png' : (doctor.gender === 'Female' ? 'assets/default-female.png' : 'assets/default-doctor.png'))" alt="Doctor Image">

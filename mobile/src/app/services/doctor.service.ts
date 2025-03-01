@@ -10,16 +10,28 @@ import { AuthService } from './auth.service';
 export class DoctorService {
   private apiUrl = 'http://localhost:5000/api';
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
 
   getDoctors(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/doctors`).pipe(
       catchError(err => {
         console.error('Error fetching doctors:', err);
         return of([
-          { name: 'Dr. Ahmed Ben Salah', specialty: 'Cardiology', city: 'Tunis', image: '', gender: 'Male' },
-          { name: 'Dr. Fatima Zouaoui', specialty: 'Dentistry', city: 'Sousse', image: '', gender: 'Female' }
+          { id: 1, name: 'Dr. Ahmed Ben Salah', specialty: 'Cardiology', city: 'Tunis', image: '', gender: 'Male' },
+          { id: 2, name: 'Dr. Fatima Zouaoui', specialty: 'Dentistry', city: 'Sousse', image: '', gender: 'Female' }
         ]);
+      })
+    );
+  }
+
+  getDoctorById(id: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/doctors/${id}`).pipe(
+      catchError(err => {
+        console.error('Error fetching doctor:', err);
+        return of(null);
       })
     );
   }
@@ -42,6 +54,30 @@ export class DoctorService {
       catchError(err => {
         console.error('Error fetching favorites:', err);
         return of([]);
+      })
+    );
+  }
+
+  addFavorite(doctorId: number): Observable<any> {
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${this.authService.getToken()}`);
+    const user = this.authService.getUser();
+    console.log('Adding favorite:', { user_id: user.id, doctor_id: doctorId, token: this.authService.getToken() });
+    return this.http.post<any>(`${this.apiUrl}/favorites/add`, { user_id: user.id, doctor_id: doctorId }, { headers }).pipe(
+      catchError(err => {
+        console.error('Error adding favorite:', err);
+        return of(null);
+      })
+    );
+  }
+
+  removeFavorite(doctorId: number): Observable<any> {
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${this.authService.getToken()}`);
+    const user = this.authService.getUser();
+    console.log('Removing favorite:', { user_id: user.id, doctor_id: doctorId, token: this.authService.getToken() });
+    return this.http.post<any>(`${this.apiUrl}/favorites/remove`, { user_id: user.id, doctor_id: doctorId }, { headers }).pipe(
+      catchError(err => {
+        console.error('Error removing favorite:', err);
+        return of(null);
       })
     );
   }

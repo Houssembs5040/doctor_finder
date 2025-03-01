@@ -103,6 +103,13 @@ def get_doctors():
     doctors = Doctor.query.all()
     return jsonify([doctor.to_dict() for doctor in doctors])
 
+@app.route('/api/doctors/<int:id>', methods=['GET'])
+def get_doctor_by_id(id):
+    doctor = Doctor.query.get(id)
+    if doctor:
+        return jsonify(doctor.to_dict())
+    return jsonify({'message': 'Doctor not found'}), 404
+
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -112,7 +119,7 @@ def login():
         return jsonify({'message': 'Email and password are required'}), 400
     user = User.query.filter_by(email=email).first()
     if user and bcrypt.check_password_hash(user.password, password):
-        access_token = create_access_token(identity=user.id)
+        access_token = create_access_token(identity=str(user.id))
         return jsonify({'message': 'Login successful', 'user': user.to_dict(), 'access_token': access_token}), 200
     return jsonify({'message': 'Invalid email or password'}), 401
 
@@ -131,13 +138,13 @@ def register():
     new_user = User(first_name=first_name, last_name=last_name, email=email, password=hashed_password)
     db.session.add(new_user)
     db.session.commit()
-    access_token = create_access_token(identity=new_user.id)
+    access_token = create_access_token(identity=str(new_user.id))
     return jsonify({'message': 'Registration successful', 'user': new_user.to_dict(), 'access_token': access_token}), 201
 
 @app.route('/api/appointments', methods=['POST'])
 @jwt_required()
 def get_appointments():
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     data = request.get_json()
     user_id = data.get('user_id')
     if not user_id or user_id != current_user_id:
@@ -148,7 +155,7 @@ def get_appointments():
 @app.route('/api/favorites', methods=['POST'])
 @jwt_required()
 def get_favorites():
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     data = request.get_json()
     user_id = data.get('user_id')
     if not user_id or user_id != current_user_id:
@@ -165,7 +172,7 @@ def get_favorites():
 @app.route('/api/profile', methods=['POST'])
 @jwt_required()
 def get_profile():
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     data = request.get_json()
     user_id = data.get('user_id')
     if not user_id or user_id != current_user_id:
@@ -174,6 +181,45 @@ def get_profile():
     if user:
         return jsonify(user.to_dict())
     return jsonify({'message': 'User not found'}), 404
+# New endpoints for adding/removing favorites (JWT required)
+@app.route('/api/favorites/add', methods=['POST'])
+@jwt_required()
+def add_favorite():
+    current_user_id = int(get_jwt_identity())
+    data = request.get_json()
+    user_id = data.get('user_id')
+    doctor_id = data.get('doctor_id')
 
+    if not user_id or not doctor_id or user_id != current_user_id:
+        return jsonify({'message': 'Unauthorized or invalid data'}), 403
+
+    # Check if already favorited
+    if Favorite.query.filter_by(user_id=user_id, doctor_id=doctor_id).first():
+        return jsonify({'message': 'Doctor already favorited'}), 400
+
+    # Add favorite
+    favorite = Favorite(user_id=user_id, doctor_id=doctor_id)
+    db.session.add(favorite)
+    db.session.commit()
+    return jsonify({'message': 'Doctor added to favorites'}), 201
+
+@app.route('/api/favorites/remove', methods=['POST'])
+@jwt_required()
+def remove_favorite():
+    current_user_id = int(get_jwt_identity())
+    data = request.get_json()
+    user_id = data.get('user_id')
+    doctor_id = data.get('doctor_id')
+
+    if not user_id or not doctor_id or user_id != current_user_id:
+        return jsonify({'message': 'Unauthorized or invalid data'}), 403
+
+    # Find and remove favorite
+    favorite = Favorite.query.filter_by(user_id=user_id, doctor_id=doctor_id).first()
+    if favorite:
+        db.session.delete(favorite)
+        db.session.commit()
+        return jsonify({'message': 'Doctor removed from favorites'}), 200
+    return jsonify({'message': 'Doctor not found in favorites'}), 404
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

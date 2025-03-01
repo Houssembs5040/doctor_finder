@@ -68,23 +68,17 @@ export class HomePage implements OnInit {
 
   applyQuickFilter(filter: string) {
     if (filter === 'Nearby') {
-      this.selectedCity = 'Tunis';
+      this.selectedCity = 'Tunis'; // Default to Tunis for "Nearby"
     } else {
       this.selectedSpecialty = filter;
     }
     this.filterDoctors();
   }
 
-  viewDoctor(doctor: any) {
-    console.log('View doctor:', doctor);
-  }
-
-  // Handle pull-to-refresh
   doRefresh(event: any) {
-    this.loadDoctors(); // Reload doctors
-    // Complete the refresher animation after data loads
+    this.loadDoctors();
     setTimeout(() => {
       event.target.complete();
-    }, 1000); // Adjust timeout based on API response time
+    }, 1000);
   }
 }
