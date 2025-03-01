@@ -1,0 +1,13 @@
+ion-menu {
+    --width: 250px;
+    z-index: 9999;
+  }
+  
+  ion-item {
+    --background: var(--ion-item-background);
+    color: var(--ion-text-color);
+  }
+  
+  .theme-icon {
+    color: var(--ion-icon-color) !important; /* Ensure it overrides Ionic defaults */
+  }

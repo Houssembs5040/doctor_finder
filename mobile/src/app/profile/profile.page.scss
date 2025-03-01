@@ -1,0 +1,17 @@
+ion-content {
+    --background: var(--ion-background-color);
+  }
+  
+  ion-card {
+    background: var(--ion-card-background);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px var(--ion-shadow-color);
+    ion-card-title { color: var(--ion-text-color); font-size: 24px; }
+    ion-card-subtitle { color: var(--ion-subtext-color); font-size: 14px; }
+    ion-item { --background: transparent; color: var(--ion-text-color); }
+  }
+  
+  .loading-spinner {
+    display: block;
+    margin: 20px auto;
+  }

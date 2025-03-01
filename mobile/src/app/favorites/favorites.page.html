@@ -1,0 +1,26 @@
+<ion-header>
+  <ion-toolbar >
+    <ion-buttons slot="start">
+      <ion-menu-button ></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Favorites</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-spinner *ngIf="loading" name="crescent" color="primary"></ion-spinner>
+  <ion-list *ngIf="!loading">
+    <ion-item *ngFor="let doctor of favorites">
+      <ion-avatar slot="start">
+        <img [src]="doctor.image || (doctor.gender === 'Male' ? 'assets/default-male.png' : 'assets/default-female.png')" alt="Doctor Image">
+      </ion-avatar>
+      <ion-label>
+        <h2>{{ doctor.name }}</h2>
+        <p>{{ doctor.specialty }} - {{ doctor.city }}</p>
+      </ion-label>
+    </ion-item>
+    <ion-item *ngIf="favorites.length === 0">
+      <ion-label>No favorite doctors yet</ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>

@@ -1,0 +1,97 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Find a Doctor</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding" fullscreen>
+  <!-- Pull-to-Refresh -->
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content 
+      pullingIcon="chevron-down-outline" 
+      pullingText="Pull to refresh" 
+      refreshingSpinner="crescent" 
+      refreshingText="Refreshing...">
+    </ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Loading Spinner -->
+  <ion-spinner *ngIf="loading" name="crescent" color="primary" class="loading-spinner"></ion-spinner>
+
+  <!-- Ad Space -->
+  <div class="ad-container" *ngIf="!loading">
+    <ion-card class="ad-placeholder">
+      <ion-card-content class="ion-text-center">
+        <p>Your Ad Here</p>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Search Section -->
+  <div class="search-container" *ngIf="!loading">
+    <ion-searchbar 
+      placeholder="Search doctors in Tunisia" 
+      [(ngModel)]="searchQuery" 
+      (ionInput)="filterDoctors()" 
+      class="search-bar">
+    </ion-searchbar>
+    
+    <ion-grid class="filter-grid">
+      <ion-row>
+        <ion-col size="6">
+          <ion-select 
+            placeholder="Specialty" 
+            [(ngModel)]="selectedSpecialty" 
+            (ionChange)="filterDoctors()" 
+            interface="popover">
+            <ion-select-option value="">All Specialties</ion-select-option>
+            <ion-select-option value="Cardiology">Cardiology</ion-select-option>
+            <ion-select-option value="Dentistry">Dentistry</ion-select-option>
+            <ion-select-option value="Pediatrics">Pediatrics</ion-select-option>
+          </ion-select>
+        </ion-col>
+        <ion-col size="6">
+          <ion-select 
+            placeholder="City" 
+            [(ngModel)]="selectedCity" 
+            (ionChange)="filterDoctors()" 
+            interface="popover">
+            <ion-select-option value="">All Cities</ion-select-option>
+            <ion-select-option value="Tunis">Tunis</ion-select-option>
+            <ion-select-option value="Sousse">Sousse</ion-select-option>
+            <ion-select-option value="Sfax">Sfax</ion-select-option>
+          </ion-select>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+
+    <div class="quick-filters">
+      <ion-button fill="outline" color="light" (click)="applyQuickFilter('Emergency')">Emergency</ion-button>
+      <ion-button fill="outline" color="light" (click)="applyQuickFilter('Pediatrics')">Pediatrics</ion-button>
+      <ion-button fill="outline" color="light" (click)="applyQuickFilter('Nearby')">Nearby</ion-button>
+    </div>
+  </div>
+  <br>
+
+  <!-- Doctors List -->
+  <ion-list class="doctors-list" *ngIf="!loading">
+    <ion-card *ngFor="let doctor of filteredDoctors" button (click)="viewDoctor(doctor)" class="doctor-card">
+      <ion-card-content class="doctor-content">
+        <ion-avatar slot="start" class="large-avatar">
+          <img [src]="doctor.image || (doctor.gender === 'Male' ? 'assets/default-male.png' : (doctor.gender === 'Female' ? 'assets/default-female.png' : 'assets/default-doctor.png'))" alt="Doctor Image">
+        </ion-avatar>
+        <ion-label class="doctor-info">
+          <h2 class="doctor-name">{{ doctor.name }}</h2>
+          <p class="doctor-details">{{ doctor.specialty }} - {{ doctor.city }}</p>
+        </ion-label>
+        <ion-icon name="chevron-forward-outline" slot="end" class="theme-icon chevron-icon"></ion-icon>
+      </ion-card-content>
+    </ion-card>
+    <ion-item *ngIf="filteredDoctors.length === 0" class="no-results">
+      <ion-label>No doctors found</ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>
