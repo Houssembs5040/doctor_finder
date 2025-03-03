@@ -39,7 +39,7 @@ export class RegisterPage {
       next: (response) => {
         this.loading = false;
         console.log('Registration successful:', response);
-        this.authService.setLoggedIn(true, response.user);
+        this.authService.setLoggedIn(true, response.user , response.access_token);
         this.router.navigate(['/home']);
       },
       error: (err) => {

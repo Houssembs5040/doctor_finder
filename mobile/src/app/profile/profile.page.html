@@ -1,15 +1,57 @@
 <ion-header>
   <ion-toolbar >
     <ion-buttons slot="start">
-      <ion-menu-button ></ion-menu-button>
+      <ion-back-button defaultHref="/home" ></ion-back-button>
     </ion-buttons>
     <ion-title>Profile</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
+<ion-content class="ion-padding" fullscreen>
   <ion-spinner *ngIf="loading" name="crescent" color="primary" class="loading-spinner"></ion-spinner>
-  <ion-card *ngIf="!loading">
+
+  <!-- Doctor's Own Profile (Beautified) -->
+  <ion-card *ngIf="!loading && isDoctor && doctorDetails" class="doctor-own-card">
+    <ion-card-header class="doctor-own-header">
+      <ion-avatar class="doctor-own-avatar">
+        <img [src]="doctorDetails.image || (doctorDetails.gender === 'Male' ? 'assets/default-male.png' : (doctorDetails.gender === 'Female' ? 'assets/default-female.png' : 'assets/default-doctor.png'))" alt="Doctor Image">
+      </ion-avatar>
+      <ion-card-title class="doctor-own-title">{{ doctorDetails.name }}</ion-card-title>
+      <ion-card-subtitle class="doctor-own-subtitle">Your Professional Profile</ion-card-subtitle>
+      <ion-label class="doctor-own-specialty">{{ doctorDetails.specialty }} - {{ doctorDetails.city }}</ion-label>
+    </ion-card-header>
+    <ion-card-content class="doctor-own-content">
+      <ion-list lines="none">
+        <ion-item>
+          <ion-icon name="person-outline" slot="start" class="theme-icon"></ion-icon>
+          <ion-label>Name: {{ user.first_name }} {{ user.last_name }}</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon name="mail-outline" slot="start" class="theme-icon"></ion-icon>
+          <ion-label>Email: {{ user.email }}</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon name="medkit-outline" slot="start" class="theme-icon"></ion-icon>
+          <ion-label>Specialty: {{ doctorDetails.specialty }}</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon name="location-outline" slot="start" class="theme-icon"></ion-icon>
+          <ion-label>City: {{ doctorDetails.city }}</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon name="home-outline" slot="start" class="theme-icon"></ion-icon>
+          <ion-label>Address: {{ doctorDetails.address || 'Not provided' }}</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon name="call-outline" slot="start" class="theme-icon"></ion-icon>
+          <ion-label>Phone: {{ doctorDetails.phone || 'Not provided' }}</ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Regular User Profile -->
+  <ion-card *ngIf="!loading && !isDoctor">
     <ion-card-header>
       <ion-card-title>{{ user.first_name }} {{ user.last_name }}</ion-card-title>
       <ion-card-subtitle>Your Profile</ion-card-subtitle>
@@ -17,6 +59,11 @@
     <ion-card-content>
       <ion-list lines="none">
         <ion-item>
+          <ion-icon name="person-outline" slot="start" class="theme-icon"></ion-icon>
+          <ion-label>Name: {{ user.first_name }} {{ user.last_name }}</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon name="mail-outline" slot="start" class="theme-icon"></ion-icon>
           <ion-label>Email: {{ user.email }}</ion-label>
         </ion-item>
       </ion-list>

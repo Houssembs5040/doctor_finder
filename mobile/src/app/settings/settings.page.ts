@@ -24,6 +24,9 @@ export class SettingsPage {
     this.isLoggedIn = this.authService.isLoggedIn();
     this.applyTheme();
   }
+  ionViewWillEnter() {
+    this.isLoggedIn = this.authService.isLoggedIn();
+  }
 
   loadThemePreference() {
     const savedTheme = localStorage.getItem('isDarkMode');

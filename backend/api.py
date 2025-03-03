@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -9,14 +10,13 @@ CORS(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
-# MySQL configuration (update with your credentials)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/doctors_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'your-secret-key-here'  # Change this to a secure random key in production
+app.config['JWT_SECRET_KEY'] = 'your-secret-key-here'
 
 db = SQLAlchemy(app)
 
-# Models
+# Doctor model
 class Doctor(db.Model):
     __tablename__ = 'doctors'
     id = db.Column(db.Integer, primary_key=True)
@@ -25,6 +25,8 @@ class Doctor(db.Model):
     city = db.Column(db.String(50), nullable=False)
     image = db.Column(db.String(200))
     gender = db.Column(db.Enum('Male', 'Female'))
+    address = db.Column(db.String(255))
+    phone = db.Column(db.String(20))  # New phone field
 
     def to_dict(self):
         return {
@@ -33,7 +35,9 @@ class Doctor(db.Model):
             'specialty': self.specialty,
             'city': self.city,
             'image': self.image or '',
-            'gender': self.gender
+            'gender': self.gender,
+            'address': self.address or '',
+            'phone': self.phone or ''  # Include phone
         }
 
 class User(db.Model):
@@ -43,15 +47,20 @@ class User(db.Model):
     last_name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
+    is_doctor = db.Column(db.Boolean, default=False)  # New field
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'), nullable=True)  # New field
 
     def to_dict(self):
         return {
             'id': self.id,
             'first_name': self.first_name,
             'last_name': self.last_name,
-            'email': self.email
+            'email': self.email,
+            'is_doctor': self.is_doctor,  # Include in response
+            'doctor_id': self.doctor_id   # Include in response
         }
 
+# Appointment model
 class Appointment(db.Model):
     __tablename__ = 'appointments'
     id = db.Column(db.Integer, primary_key=True)
@@ -69,6 +78,7 @@ class Appointment(db.Model):
             'status': self.status
         }
 
+# Favorite model
 class Favorite(db.Model):
     __tablename__ = 'favorites'
     id = db.Column(db.Integer, primary_key=True)
@@ -98,7 +108,8 @@ with app.app_context():
         db.session.add(sample_user)
         db.session.commit()
 
-@app.route('/api/doctors', methods=['GET'])  # Public endpoint
+# Public endpoints (no token required)
+@app.route('/api/doctors', methods=['GET'])
 def get_doctors():
     doctors = Doctor.query.all()
     return jsonify([doctor.to_dict() for doctor in doctors])
@@ -110,6 +121,7 @@ def get_doctor_by_id(id):
         return jsonify(doctor.to_dict())
     return jsonify({'message': 'Doctor not found'}), 404
 
+# Login endpoint (POST)
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -123,6 +135,7 @@ def login():
         return jsonify({'message': 'Login successful', 'user': user.to_dict(), 'access_token': access_token}), 200
     return jsonify({'message': 'Invalid email or password'}), 401
 
+# Register endpoint (POST)
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -135,12 +148,13 @@ def register():
     if User.query.filter_by(email=email).first():
         return jsonify({'message': 'Email already registered'}), 409
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    new_user = User(first_name=first_name, last_name=last_name, email=email, password=hashed_password)
+    new_user = User(first_name=first_name, last_name=last_name, email=email, password=hashed_password,is_doctor=False,doctor_id=None)
     db.session.add(new_user)
     db.session.commit()
     access_token = create_access_token(identity=str(new_user.id))
     return jsonify({'message': 'Registration successful', 'user': new_user.to_dict(), 'access_token': access_token}), 201
 
+# Protected endpoints (require JWT)
 @app.route('/api/appointments', methods=['POST'])
 @jwt_required()
 def get_appointments():
@@ -152,6 +166,85 @@ def get_appointments():
     appointments = Appointment.query.filter_by(user_id=user_id).all()
     return jsonify([appointment.to_dict() for appointment in appointments])
 
+@app.route('/api/doctor-appointments', methods=['POST'])  # New endpoint
+@jwt_required()
+def get_doctor_appointments():
+    current_user_id = int(get_jwt_identity())
+    data = request.get_json()
+    doctor_id = data.get('doctor_id')
+    
+    # Ensure the logged-in user is a doctor and matches the requested doctor_id
+    user = User.query.get(current_user_id)
+    if not user or not user.is_doctor or user.doctor_id != doctor_id:
+        return jsonify({'message': 'Unauthorized: You can only view your own appointments'}), 403
+
+    appointments = Appointment.query.filter_by(doctor_id=doctor_id).all()
+    return jsonify([appointment.to_dict() for appointment in appointments])
+
+@app.route('/api/doctor-available-slots', methods=['POST'])
+@jwt_required()
+def get_doctor_available_slots():
+    data = request.get_json()
+    doctor_id = data.get('doctor_id')
+    week_start = datetime.strptime(data.get('week_start'), '%Y-%m-%d')  # e.g., "2025-03-03"
+    
+    if not doctor_id or not week_start:
+        return jsonify({'message': 'doctor_id and week_start are required'}), 400
+
+    # Get all appointments for the doctor within the week
+    week_end = week_start.replace(hour=23, minute=59, second=59) + timedelta(days=6)
+    appointments = Appointment.query.filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.appointment_date >= week_start,
+        Appointment.appointment_date <= week_end
+    ).all()
+
+    # Define working hours (8 AM - 5 PM)
+    slots = []
+    for day_offset in range(7):  # 7 days of the week
+        day = week_start + timedelta(days=day_offset)
+        for hour in range(8, 18):  # 8 AM to 5 PM
+            slot_time = day.replace(hour=hour, minute=0, second=0)
+            is_booked = any(
+                app.appointment_date.replace(minute=0, second=0) == slot_time  # Directly use datetime object
+                for app in appointments
+            )
+            if not is_booked:
+                slots.append({
+                    'date': slot_time.isoformat(),
+                    'hour': slot_time.strftime('%H:00')
+                })
+
+    return jsonify(slots)
+
+@app.route('/api/appointments/book', methods=['POST'])
+@jwt_required()
+def book_appointment():
+    current_user_id = int(get_jwt_identity())
+    data = request.get_json()
+    doctor_id = data.get('doctor_id')
+    appointment_date = datetime.strptime(data.get('appointment_date'), '%Y-%m-%dT%H:%M:%S')
+
+    if not doctor_id or not appointment_date:
+        return jsonify({'message': 'doctor_id and appointment_date are required'}), 400
+
+    user = User.query.get(current_user_id)
+    if user.is_doctor and user.doctor_id == doctor_id:
+        return jsonify({'message': 'Doctors cannot book their own appointments'}), 403
+
+    if Appointment.query.filter_by(doctor_id=doctor_id, appointment_date=appointment_date).first():
+        return jsonify({'message': 'This time slot is already booked'}), 409
+
+    new_appointment = Appointment(
+        user_id=current_user_id,
+        doctor_id=doctor_id,
+        appointment_date=appointment_date,
+        status='Pending'
+    )
+    db.session.add(new_appointment)
+    db.session.commit()
+    return jsonify({'message': 'Appointment booked successfully', 'appointment': new_appointment.to_dict()}), 201
+
 @app.route('/api/favorites', methods=['POST'])
 @jwt_required()
 def get_favorites():
@@ -162,7 +255,6 @@ def get_favorites():
         return jsonify({'message': 'Unauthorized or invalid user ID'}), 403
     favorites = Favorite.query.filter_by(user_id=user_id).all()
     result = []
-    print(result)
     for favorite in favorites:
         doctor = Doctor.query.get(favorite.doctor_id)
         if doctor:
@@ -181,7 +273,7 @@ def get_profile():
     if user:
         return jsonify(user.to_dict())
     return jsonify({'message': 'User not found'}), 404
-# New endpoints for adding/removing favorites (JWT required)
+
 @app.route('/api/favorites/add', methods=['POST'])
 @jwt_required()
 def add_favorite():
@@ -189,15 +281,10 @@ def add_favorite():
     data = request.get_json()
     user_id = data.get('user_id')
     doctor_id = data.get('doctor_id')
-
     if not user_id or not doctor_id or user_id != current_user_id:
         return jsonify({'message': 'Unauthorized or invalid data'}), 403
-
-    # Check if already favorited
     if Favorite.query.filter_by(user_id=user_id, doctor_id=doctor_id).first():
         return jsonify({'message': 'Doctor already favorited'}), 400
-
-    # Add favorite
     favorite = Favorite(user_id=user_id, doctor_id=doctor_id)
     db.session.add(favorite)
     db.session.commit()
@@ -210,16 +297,14 @@ def remove_favorite():
     data = request.get_json()
     user_id = data.get('user_id')
     doctor_id = data.get('doctor_id')
-
     if not user_id or not doctor_id or user_id != current_user_id:
         return jsonify({'message': 'Unauthorized or invalid data'}), 403
-
-    # Find and remove favorite
     favorite = Favorite.query.filter_by(user_id=user_id, doctor_id=doctor_id).first()
     if favorite:
         db.session.delete(favorite)
         db.session.commit()
         return jsonify({'message': 'Doctor removed from favorites'}), 200
     return jsonify({'message': 'Doctor not found in favorites'}), 404
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

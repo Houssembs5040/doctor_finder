@@ -1,7 +1,7 @@
 <ion-app>
   <ion-menu contentId="main-content" type="overlay">
     <ion-header>
-      <ion-toolbar >
+      <ion-toolbar>
         <ion-title>Menu</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -25,26 +25,24 @@
 
   <ion-split-pane contentId="main-content">
     <ion-router-outlet id="main-content"></ion-router-outlet>
-    <ion-tabs>
+
+    <!-- Tabs for Regular Users -->
+    <ion-tabs *ngIf="!isDoctor">
       <ion-tab-bar slot="bottom" >
-        <ion-tab-button tab="home" routerLink="/home">
-          <ion-icon name="home"></ion-icon>
-          <ion-label>Home</ion-label>
+        <ion-tab-button *ngFor="let tab of regularUserTabs" [routerLink]="tab.url" routerDirection="root">
+          <ion-icon [name]="tab.icon"></ion-icon>
+          <ion-label>{{ tab.title }}</ion-label>
         </ion-tab-button>
-        <ion-tab-button tab="favorites" routerLink="/favorites">
-          <ion-icon name="heart-outline"></ion-icon>
-          <ion-label>Favorites</ion-label>
+      </ion-tab-bar>
+    </ion-tabs>
+
+    <!-- Tabs for Doctors -->
+    <ion-tabs *ngIf="isLoggedIn && isDoctor">
+      <ion-tab-bar slot="bottom" >
+        <ion-tab-button *ngFor="let tab of doctorTabs" [routerLink]="tab.url" routerDirection="root">
+          <ion-icon [name]="tab.icon"></ion-icon>
+          <ion-label>{{ tab.title }}</ion-label>
         </ion-tab-button>
-        <ion-tab-button tab="appointments" routerLink="/appointments">
-          <ion-icon name="calendar-outline"></ion-icon>
-          <ion-label>Appointments</ion-label>
-        </ion-tab-button>
-        
-        <ion-tab-button tab="profile" routerLink="/profile">
-          <ion-icon name="person-outline"></ion-icon>
-          <ion-label>Profile</ion-label>
-        </ion-tab-button>
-       
       </ion-tab-bar>
     </ion-tabs>
   </ion-split-pane>

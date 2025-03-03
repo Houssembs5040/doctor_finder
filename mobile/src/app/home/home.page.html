@@ -27,7 +27,6 @@
     </ion-card>
   </div>
 
-  <!-- Search Section -->
   <div class="search-container" *ngIf="!loading">
     <ion-searchbar 
       placeholder="Search doctors in Tunisia" 
@@ -113,7 +112,7 @@
 
   <ion-list class="doctors-list" *ngIf="!loading">
     <ion-card 
-      *ngFor="let doctor of filteredDoctors" 
+      *ngFor="let doctor of displayedDoctors" 
       button 
       [routerLink]="['/doctor-profile']" 
       [queryParams]="{ id: doctor.id }" 
@@ -129,8 +128,15 @@
         <ion-icon name="chevron-forward-outline" slot="end" class="theme-icon chevron-icon"></ion-icon>
       </ion-card-content>
     </ion-card>
-    <ion-item *ngIf="filteredDoctors.length === 0" class="no-results">
+    <ion-item *ngIf="displayedDoctors.length === 0" class="no-results">
       <ion-label>No doctors found</ion-label>
     </ion-item>
+    <ion-button 
+      expand="block" 
+      fill="outline" 
+      *ngIf="hasMoreDoctors()" 
+      (click)="showMoreDoctors()">
+      Show More
+    </ion-button>
   </ion-list>
 </ion-content>

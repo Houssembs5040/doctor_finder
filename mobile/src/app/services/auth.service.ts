@@ -16,6 +16,16 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/login`, { email, password });
   }
 
+  isDoctor(): boolean {
+    const user = this.getUser();
+    return user.is_doctor || false; // Return true if user is a doctor
+  }
+
+  getDoctorId(): number | null {
+    const user = this.getUser();
+    return user.doctor_id || null; // Return doctor_id if present
+  }
+  
   register(userData: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/register`, userData);
   }

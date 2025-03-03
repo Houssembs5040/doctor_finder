@@ -46,6 +46,35 @@ export class DoctorService {
       })
     );
   }
+  getDoctorAppointments(doctorId: number): Observable<any[]> {
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${this.authService.getToken()}`);
+    return this.http.post<any[]>(`${this.apiUrl}/doctor-appointments`, { doctor_id: doctorId }, { headers }).pipe(
+      catchError(err => {
+        console.error('Error fetching doctor appointments:', err);
+        return of([]);
+      })
+    );
+  }
+  getDoctorAvailableSlots(doctorId: number, weekStart: string): Observable<any[]> {
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${this.authService.getToken()}`);
+    return this.http.post<any[]>(`${this.apiUrl}/doctor-available-slots`, { doctor_id: doctorId, week_start: weekStart }, { headers }).pipe(
+      catchError(err => {
+        console.error('Error fetching available slots:', err);
+        return of([]);
+      })
+    );
+  }
+
+  bookAppointment(doctorId: number, appointmentDate: string): Observable<any> {
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${this.authService.getToken()}`);
+    const user = this.authService.getUser();
+    return this.http.post<any>(`${this.apiUrl}/appointments/book`, { doctor_id: doctorId, appointment_date: appointmentDate }, { headers }).pipe(
+      catchError(err => {
+        console.error('Error booking appointment:', err);
+        return of(null);
+      })
+    );
+  }
 
   getFavorites(): Observable<any[]> {
     const headers = new HttpHeaders().set('Authorization', `Bearer ${this.authService.getToken()}`);
