@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { DoctorService } from '../services/doctor.service';
+import { Router } from '@angular/router'; // Add Router for navigation
 
 @Component({
   selector: 'app-schedule',
@@ -14,14 +15,12 @@ export class SchedulePage {
   daysOfWeek: Date[] = [];
   appointments: any[] = [];
   loading: boolean = true;
-  hours: string[] = [
-    '08:00', '09:00', '10:00', '11:00', '12:00',
-    '13:00', '14:00', '15:00', '16:00', '17:00'
-  ];
+  hours: string[] = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
   constructor(
     private authService: AuthService,
-    private doctorService: DoctorService
+    private doctorService: DoctorService,
+    private router: Router // Inject Router
   ) {}
 
   ionViewWillEnter() {
@@ -47,8 +46,8 @@ export class SchedulePage {
       this.doctorService.getDoctorAppointments(this.doctorId).subscribe({
         next: (data) => {
           const weekStart = this.daysOfWeek[0];
-          const weekEnd = new Date(this.daysOfWeek[5]); // Last day is Saturday
-          weekEnd.setDate(weekEnd.getDate() + 1); // Next day (Sunday)
+          const weekEnd = new Date(this.daysOfWeek[5]);
+          weekEnd.setDate(weekEnd.getDate() + 1);
           weekEnd.setHours(0, 0, 0, 0);
 
           this.appointments = data.filter(app => {
@@ -91,7 +90,22 @@ export class SchedulePage {
       return appDate.getHours() === slotTime.getHours() && appDate.toDateString() === day.toDateString();
     });
 
-    return appointment ? 'booked-slot' : 'free-slot';
+    return appointment ? 'booked-slot clickable' : 'free-slot';
+  }
+
+  viewPatientProfile(day: Date, hour: string) {
+    const slotTime = new Date(day);
+    const [hourNum] = hour.split(':');
+    slotTime.setHours(parseInt(hourNum, 10), 0, 0, 0);
+
+    const appointment = this.appointments.find(app => {
+      const appDate = new Date(app.appointment_date);
+      return appDate.getHours() === slotTime.getHours() && appDate.toDateString() === day.toDateString();
+    });
+
+    if (appointment) {
+      this.router.navigate(['/profile'], { queryParams: { user_id: appointment.user_id } });
+    }
   }
 
   previousWeek() {

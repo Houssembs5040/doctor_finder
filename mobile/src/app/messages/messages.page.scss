@@ -1,0 +1,119 @@
+ion-content.chat-content {
+  --background: var(--ion-background-color);
+  color: var(--ion-text-color);
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 56px);
+  overflow-y: auto;
+
+  .messages-container {
+    flex-grow: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .message-wrapper {
+      display: flex;
+      flex-direction: column;
+
+      &.sent {
+        align-items: flex-end;
+      }
+
+      &.received {
+        align-items: flex-start;
+      }
+
+      .message-bubble {
+        max-width: 70%;
+        padding: 12px 16px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px var(--ion-shadow-color);
+        position: relative;
+
+        &.sent {
+          background: var(--ion-accent-color);
+          color: #fff;
+        }
+
+        &.received {
+          background: var(--ion-message-received-color, #4a4a4a);
+          color: var(--ion-text-color);
+        }
+
+        p {
+          margin: 0;
+          font-size: 16px;
+          word-wrap: break-word;
+        }
+
+        .timestamp {
+          font-size: 12px;
+          //color: var(--ion-subtext-color);
+          margin-top: 4px;
+          display: block;
+          text-align: right;
+        }
+      }
+    }
+
+    .no-messages {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--ion-subtext-color);
+
+      .no-messages-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+      }
+
+      p {
+        font-size: 16px;
+      }
+    }
+  }
+
+  .loading-spinner {
+    display: block;
+    margin: 20px auto;
+  }
+}
+
+ion-footer.message-footer {
+  background: var(--ion-toolbar-background); /* Direct property instead of variable */
+  --background: var(--ion-toolbar-background); /* Ensure Ionic variable works */
+  padding: 8px;
+  border-top: 1px solid var(--ion-subtext-color);
+
+  ion-toolbar {
+    --background: var(--ion-toolbar-background); /* Override transparent */
+    display: flex;
+    align-items: center;
+
+    ion-textarea.message-input {
+      --background: var(--ion-item-background);
+      --color: var(--ion-text-color);
+      --padding-start: 12px;
+      --padding-end: 12px;
+      --padding-top: 8px;
+      --padding-bottom: 8px;
+      border-radius: 20px;
+      flex-grow: 1;
+      margin-right: 8px;
+      font-size: 16px;
+      max-height: 100px;
+    }
+
+    ion-button.send-button {
+      --padding-start: 8px;
+      --padding-end: 8px;
+      ion-icon {
+        font-size: 24px;
+      }
+    }
+  }
+}

@@ -7,8 +7,14 @@
     </ion-header>
     <ion-content class="ion-padding">
       <ion-list>
-        <ng-container *ngIf="isLoggedIn">
+        <ng-container *ngIf="isLoggedIn && !isDoctor">
           <ion-item *ngFor="let item of loggedInMenuItems" button [routerLink]="item.url" routerDirection="forward" (click)="closeMenu()">
+            <ion-icon [name]="item.icon" slot="start" class="theme-icon"></ion-icon>
+            <ion-label>{{ item.title }}</ion-label>
+          </ion-item>
+        </ng-container>
+        <ng-container *ngIf="isLoggedIn && isDoctor">
+          <ion-item *ngFor="let item of doctorMenuItems" button [routerLink]="item.url" routerDirection="forward" (click)="closeMenu()">
             <ion-icon [name]="item.icon" slot="start" class="theme-icon"></ion-icon>
             <ion-label>{{ item.title }}</ion-label>
           </ion-item>
@@ -28,20 +34,44 @@
 
     <!-- Tabs for Regular Users -->
     <ion-tabs *ngIf="!isDoctor">
-      <ion-tab-bar slot="bottom" >
-        <ion-tab-button *ngFor="let tab of regularUserTabs" [routerLink]="tab.url" routerDirection="root">
-          <ion-icon [name]="tab.icon"></ion-icon>
-          <ion-label>{{ tab.title }}</ion-label>
+      <ion-tab-bar slot="bottom">
+        <ion-tab-button tab="home">
+          <ion-icon name="home"></ion-icon>
+          <ion-label>Home</ion-label>
+        </ion-tab-button>
+        <ion-tab-button tab="appointments">
+          <ion-icon name="calendar"></ion-icon>
+          <ion-label>Appointments</ion-label>
+        </ion-tab-button>
+        <ion-tab-button tab="messages-list">
+          <ion-icon name="chatbubble"></ion-icon>
+          <ion-label>Messages</ion-label>
+        </ion-tab-button>
+        <ion-tab-button tab="profile">
+          <ion-icon name="person"></ion-icon>
+          <ion-label>Profile</ion-label>
         </ion-tab-button>
       </ion-tab-bar>
     </ion-tabs>
 
     <!-- Tabs for Doctors -->
     <ion-tabs *ngIf="isLoggedIn && isDoctor">
-      <ion-tab-bar slot="bottom" >
-        <ion-tab-button *ngFor="let tab of doctorTabs" [routerLink]="tab.url" routerDirection="root">
-          <ion-icon [name]="tab.icon"></ion-icon>
-          <ion-label>{{ tab.title }}</ion-label>
+      <ion-tab-bar slot="bottom">
+        <ion-tab-button tab="home">
+          <ion-icon name="home"></ion-icon>
+          <ion-label>Home</ion-label>
+        </ion-tab-button>
+        <ion-tab-button tab="schedule">
+          <ion-icon name="calendar"></ion-icon>
+          <ion-label>Schedule</ion-label>
+        </ion-tab-button>
+        <ion-tab-button tab="messages-list">
+          <ion-icon name="chatbubble"></ion-icon>
+          <ion-label>Messages</ion-label>
+        </ion-tab-button>
+        <ion-tab-button tab="profile">
+          <ion-icon name="person"></ion-icon>
+          <ion-label>Profile</ion-label>
         </ion-tab-button>
       </ion-tab-bar>
     </ion-tabs>

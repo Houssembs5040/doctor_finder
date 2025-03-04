@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { AuthService } from './services/auth.service';
 import { MenuController } from '@ionic/angular';
 import { Renderer2 } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -12,29 +14,33 @@ import { Renderer2 } from '@angular/core';
 export class AppComponent implements OnInit {
   isLoggedIn: boolean = false;
   isDoctor: boolean = false;
+  currentRoute: string = '/home'; // Default to home
 
-  // Tabs for regular users
   regularUserTabs = [
     { title: 'Home', url: '/home', icon: 'home' },
-    { title: 'Favorites', url: '/favorites', icon: 'heart' },
+    { title: 'Appointments', url: '/appointments', icon: 'calendar' },
+    { title: 'Messages', url: '/messages-list', icon: 'chatbubble' },
     { title: 'Profile', url: '/profile', icon: 'person' }
   ];
 
-  // Tabs for doctors
   doctorTabs = [
     { title: 'Home', url: '/home', icon: 'home' },
     { title: 'Schedule', url: '/schedule', icon: 'calendar' },
+    { title: 'Messages', url: '/messages-list', icon: 'chatbubble' },
     { title: 'Profile', url: '/profile', icon: 'person' }
   ];
 
-  // Menu items remain the same for now
   loggedInMenuItems = [
-    { title: 'Profile', url: '/profile', icon: 'person-outline' },
-    { title: 'Appointments', url: '/appointments', icon: 'calendar-outline' },
-    { title: 'History', url: '/history', icon: 'time-outline' },
+    { title: 'Profile', url: '/profile', icon: 'person' },
+    { title: 'Messages', url: '/messages-list', icon: 'chatbubble-ellipses' },
+    { title: 'Favorites', url: '/favorites', icon: 'heart' },
+    { title: 'History', url: '/history', icon: 'time' },
     { title: 'Settings', url: '/settings', icon: 'settings' }
   ];
-
+  doctorMenuItems = [
+    { title: 'Profile', url: '/profile', icon: 'person-outline' },
+    { title: 'Settings', url: '/settings', icon: 'settings' }
+  ];
   loggedOutMenuItems = [
     { title: 'Login', url: '/login', icon: 'log-in-outline' },
     { title: 'Register', url: '/register', icon: 'person-add-outline' },
@@ -44,7 +50,8 @@ export class AppComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private menuCtrl: MenuController,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -53,12 +60,26 @@ export class AppComponent implements OnInit {
     this.authService.isLoggedIn$.subscribe(isLoggedIn => {
       console.log('isLoggedIn$ updated:', isLoggedIn);
       this.isLoggedIn = isLoggedIn;
-      this.isDoctor = this.authService.isDoctor(); // Check if doctor
+      this.isDoctor = this.authService.isDoctor();
+      this.updateRouteAfterAuthChange(); // Update route when auth changes
     });
+
+    // Subscribe to router events
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      this.currentRoute = event.urlAfterRedirects;
+      console.log('NavigationEnd - Current route:', this.currentRoute);
+    });
+
+    // Set initial route
+    this.currentRoute = this.router.url || '/home';
+    console.log('Initial route:', this.currentRoute);
   }
+
   loadThemePreference() {
     const savedTheme = localStorage.getItem('isDarkMode');
-    const isDarkMode = savedTheme !== null ? savedTheme === 'true' : true; // Default to dark if no preference
+    const isDarkMode = savedTheme !== null ? savedTheme === 'true' : true;
     const appElement = document.querySelector('ion-app');
     if (!isDarkMode && appElement) {
       this.renderer.addClass(appElement, 'light-theme');
@@ -76,5 +97,30 @@ export class AppComponent implements OnInit {
 
   closeMenu() {
     this.menuCtrl.close();
+  }
+
+  isTabSelected(tabUrl: string): boolean {
+    const isSelected = this.currentRoute === tabUrl || this.currentRoute.startsWith(`${tabUrl}/`);
+    console.log(`Checking if ${tabUrl} is selected: ${isSelected}, currentRoute: ${this.currentRoute}`);
+    return isSelected;
+  }
+
+  selectTab(tabUrl: string) {
+    this.currentRoute = tabUrl;
+    console.log('Tab clicked, set currentRoute to:', tabUrl);
+    this.router.navigate([tabUrl]); // Ensure navigation occurs
+  }
+
+  // Handle route updates after auth state changes
+  private updateRouteAfterAuthChange() {
+    if (!this.isLoggedIn) {
+      this.currentRoute = '/home'; // Default to home when logged out
+    } else if (!this.router.url || this.router.url === '/') {
+      this.currentRoute = this.isDoctor ? '/home' : '/home'; // Default based on role
+      this.router.navigate([this.currentRoute]);
+    } else {
+      this.currentRoute = this.router.url; // Keep current route if valid
+    }
+    console.log('Route updated after auth change:', this.currentRoute);
   }
 }

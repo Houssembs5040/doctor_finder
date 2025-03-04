@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DoctorService } from '../services/doctor.service';
 import { AuthService } from '../services/auth.service';
 import { ToastController, ModalController } from '@ionic/angular';
@@ -14,19 +14,26 @@ import { BookingModalComponent } from '../booking-modal/booking-modal.component'
 })
 export class DoctorProfilePage {
   doctor: any = null;
+  doctorUserId: number | null = null;
   loading: boolean = true;
   isFavorite: boolean = false;
   isOwnProfile: boolean = false;
-  showMoreActions: boolean = false; // New flag for toggling actions
+  showMoreActions: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private doctorService: DoctorService,
-    private authService: AuthService,
+    private authService: AuthService, // Still private
     private toastController: ToastController,
     private platform: Platform,
     private modalController: ModalController
   ) {}
+
+  // Public method to expose login status
+  public isLoggedIn(): boolean {
+    return this.authService.isLoggedIn();
+  }
 
   ionViewWillEnter() {
     this.loadDoctor();
@@ -41,7 +48,11 @@ export class DoctorProfilePage {
           this.doctor = data;
           this.checkFavoriteStatus();
           this.checkIfOwnProfile();
-          this.loading = false;
+          if (this.authService.isLoggedIn()) {
+            this.fetchDoctorUserId(parseInt(doctorId, 10));
+          } else {
+            this.loading = false;
+          }
         },
         error: (err) => {
           console.error('Error loading doctor:', err);
@@ -53,6 +64,21 @@ export class DoctorProfilePage {
       this.loading = false;
       this.presentToast('No doctor ID provided', 'warning');
     }
+  }
+
+  fetchDoctorUserId(doctorId: number) {
+    this.doctorService.getUserByDoctorId(doctorId).subscribe({
+      next: (user) => {
+        this.doctorUserId = user ? user.id : null;
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error fetching doctor user ID:', err);
+        this.doctorUserId = null;
+        this.loading = false;
+        this.presentToast('Unable to fetch doctor messaging info', 'danger');
+      }
+    });
   }
 
   checkFavoriteStatus() {
@@ -118,6 +144,23 @@ export class DoctorProfilePage {
         }
       });
     }
+  }
+
+  async sendMessage() {
+    if (!this.authService.isLoggedIn()) {
+      this.presentToast('Please log in to send a message', 'warning');
+      return;
+    }
+    if (this.isOwnProfile) {
+      this.presentToast('You cannot message yourself', 'warning');
+      return;
+    }
+    if (!this.doctorUserId) {
+      this.presentToast('Unable to message this doctor due to missing user info', 'warning');
+      return;
+    }
+
+    this.router.navigate(['/messages'], { queryParams: { user_id: this.doctorUserId } });
   }
 
   async presentToast(message: string, color: string) {

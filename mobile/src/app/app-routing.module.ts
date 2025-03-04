@@ -13,7 +13,13 @@ const routes: Routes = [
   { path: 'history', loadChildren: () => import('./history/history.module').then(m => m.HistoryPageModule), canActivate: [AuthGuard] },
   { path: 'favorites', loadChildren: () => import('./favorites/favorites.module').then(m => m.FavoritesPageModule), canActivate: [AuthGuard] },
   { path: 'doctor-profile', loadChildren: () => import('./doctor-profile/doctor-profile.module').then(m => m.DoctorProfilePageModule) },  
-  { path: 'schedule', loadChildren: () => import('./schedule/schedule.module').then(m => m.SchedulePageModule), canActivate: [AuthGuard] }
+  { path: 'schedule', loadChildren: () => import('./schedule/schedule.module').then(m => m.SchedulePageModule), canActivate: [AuthGuard] },
+  { path: 'messages', loadChildren: () => import('./messages/messages.module').then(m => m.MessagesPageModule), canActivate: [AuthGuard] },
+  {
+    path: 'messages-list',
+    loadChildren: () => import('./messages-list/messages-list.module').then( m => m.MessagesListPageModule), canActivate: [AuthGuard]
+  }
+
 // Updated route
 ];
 

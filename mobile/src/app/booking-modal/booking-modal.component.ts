@@ -1,15 +1,14 @@
 import { Component, Input } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { ModalController, ToastController } from '@ionic/angular';
 import { DoctorService } from '../services/doctor.service';
 import { AuthService } from '../services/auth.service';
-import { ToastController } from '@ionic/angular';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-booking-modal',
   templateUrl: './booking-modal.component.html',
   styleUrls: ['./booking-modal.component.scss'],
-  standalone: false,
+  standalone : false,
 })
 export class BookingModalComponent {
   @Input() doctorId!: number;
@@ -42,7 +41,7 @@ export class BookingModalComponent {
     this.daysOfWeek = [];
     const start = new Date(this.currentWeekStart);
     start.setHours(0, 0, 0, 0);
-    for (let i = 0; i < 6; i++) { // 6 days (Mon-Sat)
+    for (let i = 0; i < 6; i++) {
       const day = new Date(start);
       day.setDate(start.getDate() + i);
       this.daysOfWeek.push(day);
@@ -52,7 +51,7 @@ export class BookingModalComponent {
 
   loadData() {
     this.loading = true;
-    const weekStart = this.daysOfWeek[0].toISOString().split('T')[0]; // e.g., "2025-03-03"
+    const weekStart = this.daysOfWeek[0].toISOString().split('T')[0];
     
     this.doctorService.getDoctorAvailableSlots(this.doctorId, weekStart).subscribe({
       next: (slots) => {
@@ -140,7 +139,6 @@ export class BookingModalComponent {
     const isAvailable = this.availableSlots.some(slot => 
       new Date(slot.date).getTime() === slotTime.getTime()
     );
-    //  console.log(`Slot ${slotTime.toISOString()}: isBooked=${isBooked}, isAvailable=${isAvailable}`);
     return isAvailable && !isBooked;
   }
 
@@ -150,7 +148,6 @@ export class BookingModalComponent {
       new Date(app.appointment_date).getTime() === slotTime.getTime()
     );
     if (userAppointment) {
-      console.log("hi")
       return `Booked (Me)`;
     }
     const isAvailable = this.availableSlots.some(slot => 
@@ -173,7 +170,7 @@ export class BookingModalComponent {
     return isAvailable ? 'free-slot' : 'booked-slot';
   }
 
-  public getSlot(day: Date, hour: string): any { // Changed to public
+  public getSlot(day: Date, hour: string): any {
     const slotTime = this.getSlotTime(day, hour);
     return this.availableSlots.find(slot => new Date(slot.date).getTime() === slotTime.getTime());
   }

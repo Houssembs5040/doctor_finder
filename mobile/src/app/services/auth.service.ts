@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -9,29 +10,28 @@ export class AuthService {
   private apiUrl = 'http://localhost:5000/api';
   private isLoggedInSubject = new BehaviorSubject<boolean>(this.isLoggedIn());
   public isLoggedIn$ = this.isLoggedInSubject.asObservable();
+  private userSubject = new BehaviorSubject<any>(this.getUser());
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.loadThemePreference(); // Load theme on init
+  }
 
   login(email: string, password: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/login`, { email, password });
+    return this.http.post<any>(`${this.apiUrl}/login`, { email, password }).pipe(
+      tap(response => {
+        this.setLoggedIn(true, response.user, response.access_token);
+        this.userSubject.next(response.user);
+      })
+    );
   }
 
-  isDoctor(): boolean {
-    const user = this.getUser();
-    return user.is_doctor || false; // Return true if user is a doctor
-  }
-
-  getDoctorId(): number | null {
-    const user = this.getUser();
-    return user.doctor_id || null; // Return doctor_id if present
-  }
-  
   register(userData: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/register`, userData);
-  }
-
-  isLoggedIn(): boolean {
-    return localStorage.getItem('isLoggedIn') === 'true';
+    return this.http.post<any>(`${this.apiUrl}/register`, userData).pipe(
+      tap(response => {
+        this.setLoggedIn(true, response.user, response.access_token);
+        this.userSubject.next(response.user);
+      })
+    );
   }
 
   logout(): void {
@@ -39,6 +39,11 @@ export class AuthService {
     localStorage.removeItem('user');
     localStorage.removeItem('access_token');
     this.isLoggedInSubject.next(false);
+    this.userSubject.next(null);
+  }
+
+  isLoggedIn(): boolean {
+    return localStorage.getItem('isLoggedIn') === 'true' && !!this.getToken();
   }
 
   getUser(): any {
@@ -60,18 +65,47 @@ export class AuthService {
     return localStorage.getItem('access_token');
   }
 
+  isDoctor(): boolean {
+    const user = this.getUser();
+    return user.is_doctor || false;
+  }
+
+  getDoctorId(): number | null {
+    const user = this.getUser();
+    return user.doctor_id || null;
+  }
+
   getProfile(): Observable<any> {
     const headers = new HttpHeaders().set('Authorization', `Bearer ${this.getToken()}`);
     const user = this.getUser();
-    return this.http.post<any>(`${this.apiUrl}/profile`, { user_id: user.id }, { headers });
+    return this.http.post<any>(`${this.apiUrl}/profile`, { user_id: user.id }, { headers }).pipe(
+      tap(profile => {
+        // Optionally update local user data if profile changes
+        this.setLoggedIn(true, profile);
+        this.userSubject.next(profile);
+      })
+    );
   }
-  // In auth.service.ts or a new theme.service.ts
-loadThemePreference() {
-  const savedTheme = localStorage.getItem('isDarkMode');
-  const isDarkMode = savedTheme !== null ? savedTheme === 'true' : true;
-  const appElement = document.querySelector('ion-app');
-  if (!isDarkMode && appElement) {
-    appElement.classList.add('light-theme');
+
+  // Theme management
+  loadThemePreference(): void {
+    const savedTheme = localStorage.getItem('isDarkMode');
+    const isDarkMode = savedTheme !== null ? savedTheme === 'true' : true;
+    const appElement = document.querySelector('ion-app');
+    if (!isDarkMode && appElement) {
+      appElement.classList.add('light-theme');
+    } else if (isDarkMode && appElement) {
+      appElement.classList.remove('light-theme');
+    }
   }
-}
+
+  toggleTheme(isDarkMode: boolean): void {
+    localStorage.setItem('isDarkMode', isDarkMode.toString());
+    const appElement = document.querySelector('ion-app');
+    if (!isDarkMode && appElement) {
+      appElement.classList.add('light-theme');
+    } else if (appElement) {
+      appElement.classList.remove('light-theme');
+    }
+  }
 }
