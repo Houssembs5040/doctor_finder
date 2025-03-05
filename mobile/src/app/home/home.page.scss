@@ -1,3 +1,9 @@
+ion-header {
+  --background: var(--ion-toolbar-background);
+  --color: var(--ion-text-color);
+  padding-top: 25px;
+}
+
 ion-content {
   --background: var(--ion-background-color);
 }

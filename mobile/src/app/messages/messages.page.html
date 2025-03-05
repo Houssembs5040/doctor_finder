@@ -7,28 +7,25 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding chat-content">
+<ion-content class="ion-padding">
   <ion-spinner *ngIf="loading" name="crescent" color="primary" class="loading-spinner"></ion-spinner>
-  
   <div class="messages-container" *ngIf="!loading">
-    <div *ngFor="let message of messages" class="message-wrapper" [ngClass]="{'sent': message.sender_id === currentUser.id, 'received': message.sender_id !== currentUser.id}">
-      <div class="message-bubble" [ngClass]="{'sent': message.sender_id === currentUser.id, 'received': message.sender_id !== currentUser.id}">
-        <p>{{ message.message_text }}</p>
-        <span class="timestamp">{{ message.sent_at | date:'h:mm a' }}</span>
-      </div>
+    <div *ngFor="let message of messages" [ngClass]="{'message-sent': message.sender_id === currentUser.id, 'message-received': message.sender_id !== currentUser.id}">
+      <p>{{ message.message_text }}</p>
+      <span class="timestamp">{{ message.sent_at | date:'short' }}</span>
     </div>
     <div *ngIf="messages.length === 0" class="no-messages">
-      <ion-icon name="chatbubbles-outline" class="no-messages-icon"></ion-icon>
+      <ion-icon name="chatbubbles-outline"></ion-icon>
       <p>No messages yet</p>
     </div>
   </div>
-</ion-content>
 
-<ion-footer class="message-footer">
-  <ion-toolbar>
-    <ion-textarea [(ngModel)]="newMessage" placeholder="Type a message..." rows="1" auto-grow="true" class="message-input"></ion-textarea>
-    <ion-button slot="end" fill="clear" (click)="sendMessage()" class="send-button">
-      <ion-icon name="send-outline" color="primary"></ion-icon>
-    </ion-button>
-  </ion-toolbar>
-</ion-footer>
+  <ion-footer>
+    <ion-toolbar>
+      <ion-textarea [(ngModel)]="newMessage" placeholder="Type a message..." auto-grow="true"></ion-textarea>
+      <ion-button slot="end" fill="clear" (click)="sendMessage()">
+        <ion-icon name="send-outline" color="primary"></ion-icon>
+      </ion-button>
+    </ion-toolbar>
+  </ion-footer>
+</ion-content>

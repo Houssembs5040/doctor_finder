@@ -29,7 +29,7 @@ export class MessagesPage implements OnInit, OnDestroy {
   ) {
     const token = this.authService.getToken();
     console.log('Token for WebSocket:', token);
-    this.socket = io('http://localhost:5000', {
+    this.socket = io('https://doctor-finder-3lrk.onrender.com', {
       auth: { token: token }
     });
 

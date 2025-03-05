@@ -4,6 +4,7 @@ import { MenuController } from '@ionic/angular';
 import { Renderer2 } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 @Component({
   selector: 'app-root',
@@ -52,7 +53,9 @@ export class AppComponent implements OnInit {
     private menuCtrl: MenuController,
     private renderer: Renderer2,
     private router: Router
-  ) {}
+  ) {
+    this.initializeApp();
+  }
 
   ngOnInit() {
     this.checkLoginStatus();
@@ -122,5 +125,14 @@ export class AppComponent implements OnInit {
       this.currentRoute = this.router.url; // Keep current route if valid
     }
     console.log('Route updated after auth change:', this.currentRoute);
+  }
+  async initializeApp() {
+    try {
+      await StatusBar.setStyle({ style: Style.Dark });       // White text/icons
+      await StatusBar.setBackgroundColor({ color: '#3880ff' }); // Blue background
+      await StatusBar.setOverlaysWebView({ overlay: false });   // Prevent overlap
+    } catch (e) {
+      console.error('StatusBar setup failed:', e);
+    }
   }
 }

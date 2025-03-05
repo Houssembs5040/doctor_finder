@@ -1,3 +1,8 @@
+ion-header {
+  --background: var(--ion-toolbar-background);
+  --color: var(--ion-text-color);
+  padding-top: 25px; /* Pushes header below status bar */
+}
 ion-content {
   --background: var(--ion-background-color);
   padding: 0;
@@ -52,6 +57,7 @@ ion-card {
       font-weight: 700;
       margin: 0;
       text-align: center;
+      color : var(--ion-text-color);
     }
 
     .profile-subtitle, .doctor-own-subtitle {

@@ -1,3 +1,8 @@
+ion-header {
+  --background: var(--ion-toolbar-background);
+  --color: var(--ion-text-color);
+  padding-top: 25px; /* Pushes header below status bar */
+}
 ion-content {
   --background: var(--ion-background-color); // Uses #1f1f1f (dark) or #f4f4f4 (light)
   color: var(--ion-text-color); // Uses #ffffff (dark) or #333333 (light)
