@@ -1,9 +1,10 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { DoctorService } from '../services/doctor.service';
-import { IonContent, ToastController } from '@ionic/angular';
+import { IonContent, ToastController, IonTextarea } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
 import { io, Socket } from 'socket.io-client';
+import { Keyboard, KeyboardInfo } from '@capacitor/keyboard';
 
 @Component({
   selector: 'app-messages',
@@ -13,13 +14,16 @@ import { io, Socket } from 'socket.io-client';
 })
 export class MessagesPage implements OnInit, OnDestroy {
   @ViewChild(IonContent) content: IonContent | undefined;
+  @ViewChild('messageInput') messageInput: IonTextarea | undefined;
   messages: any[] = [];
   newMessage: string = '';
   otherUserId: number | null = null;
-  otherUserName: string = ''; // New property for the other user's name
+  otherUserName: string = '';
+  otherUserAvatar: string | null = null; // Placeholder for avatar URL
   currentUser: any;
   loading: boolean = false;
   private socket: Socket;
+  private keyboardHeight: number = 0;
 
   constructor(
     private authService: AuthService,
@@ -28,7 +32,6 @@ export class MessagesPage implements OnInit, OnDestroy {
     private route: ActivatedRoute
   ) {
     const token = this.authService.getToken();
-    console.log('Token for WebSocket:', token);
     this.socket = io('https://doctor-finder-3lrk.onrender.com', {
       auth: { token: token }
     });
@@ -64,7 +67,7 @@ export class MessagesPage implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.currentUser = this.authService.getUser();
     console.log('Current user:', this.currentUser);
     this.route.queryParams.subscribe(params => {
@@ -78,10 +81,37 @@ export class MessagesPage implements OnInit, OnDestroy {
         }
       }
     });
+
+    if (Keyboard) {
+      Keyboard.addListener('keyboardWillShow', (info: KeyboardInfo) => {
+        console.log('Keyboard will show with height:', info.keyboardHeight);
+        this.keyboardHeight = info.keyboardHeight;
+        this.adjustForKeyboard();
+      });
+
+      Keyboard.addListener('keyboardWillHide', () => {
+        console.log('Keyboard will hide');
+        this.keyboardHeight = 0;
+        this.adjustForKeyboard();
+      });
+
+      Keyboard.addListener('keyboardDidShow', (info: KeyboardInfo) => {
+        console.log('Keyboard did show with height:', info.keyboardHeight);
+        this.adjustForKeyboard();
+      });
+
+      Keyboard.addListener('keyboardDidHide', () => {
+        console.log('Keyboard did hide');
+        this.adjustForKeyboard();
+      });
+    }
   }
 
   ngOnDestroy() {
     this.socket.disconnect();
+    if (Keyboard) {
+      Keyboard.removeAllListeners();
+    }
   }
 
   loadMessages() {
@@ -108,6 +138,7 @@ export class MessagesPage implements OnInit, OnDestroy {
     this.doctorService.getUserProfile(this.otherUserId).subscribe({
       next: (user) => {
         this.otherUserName = `${user.first_name} ${user.last_name}`;
+        this.otherUserAvatar = user.avatar || null; // Assuming avatar is part of user data
         console.log('Other user name:', this.otherUserName);
       },
       error: (err) => {
@@ -133,6 +164,7 @@ export class MessagesPage implements OnInit, OnDestroy {
       next: () => {
         this.newMessage = '';
         this.scrollToBottom();
+        setTimeout(() => this.messageInput?.setFocus(), 100);
       },
       error: (err) => {
         console.error('Send message error:', err);
@@ -150,7 +182,11 @@ export class MessagesPage implements OnInit, OnDestroy {
   }
 
   scrollToBottom() {
-    setTimeout(() => this.content?.scrollToBottom(300), 100);
+    setTimeout(() => {
+      if (this.content) {
+        this.content.scrollToBottom(300);
+      }
+    }, 100);
   }
 
   async presentToast(message: string, color: string) {
@@ -161,5 +197,23 @@ export class MessagesPage implements OnInit, OnDestroy {
       position: 'bottom'
     });
     await toast.present();
+  }
+
+  adjustForKeyboard() {
+    if (this.content && this.messageInput) {
+      this.content.scrollToBottom(300);
+    }
+  }
+
+  onInputFocus() {
+    setTimeout(() => {
+      this.adjustForKeyboard();
+    }, 300);
+  }
+
+  onInputBlur() {
+    setTimeout(() => {
+      this.adjustForKeyboard();
+    }, 300);
   }
 }

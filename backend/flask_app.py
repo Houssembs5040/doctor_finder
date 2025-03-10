@@ -572,6 +572,61 @@ def get_user_by_doctor_id():
         'doctor_id': user.doctor_id
     }), 200
 
+@app.route('/api/doctors/<int:doctor_id>/availability/week', methods=['GET'])
+@jwt_required()
+def get_weekly_availability(doctor_id):
+    today = datetime.today()  # Start from today
+    week_start = today.replace(hour=0, minute=0, second=0, microsecond=0)  # Midnight today
+    week_end = week_start + timedelta(days=7, hours=23, minutes=59, seconds=59)  # 6 days ahead
+    
+    appointments = Appointment.query.filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.appointment_date >= week_start,
+        Appointment.appointment_date <= week_end
+    ).all()
+    
+    availability = []
+    slots = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"]
+    for day_offset in range(8):
+        day = week_start + timedelta(days=day_offset)
+        day_start = day.replace(hour=0, minute=0, second=0)
+        day_end = day.replace(hour=23, minute=59, second=59)
+        day_appointments = [appt for appt in appointments if appt.appointment_date >= day_start and appt.appointment_date <= day_end]
+        booked_slots = [appt.appointment_date.strftime('%H:%M') for appt in day_appointments]
+        is_available = any(slot not in booked_slots for slot in slots)
+        availability.append({
+            "date": day.date().isoformat(),
+            "is_available": is_available
+        })
+    
+    return jsonify(availability)
+
+@app.route('/api/doctors/<int:doctor_id>/availability/day', methods=['GET'])
+@jwt_required()
+def get_day_schedule(doctor_id):
+    date_str = request.args.get('date')
+    if not date_str:
+        return jsonify({'message': 'date parameter is required'}), 400
+    
+    try:
+        day = datetime.strptime(date_str, '%Y-%m-%d')
+    except ValueError:
+        return jsonify({'message': 'Invalid date format, use YYYY-MM-DD'}), 400
+    
+    day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+    day_end = day.replace(hour=23, minute=59, second=59, microsecond=999999)
+    
+    appointments = Appointment.query.filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.appointment_date >= day_start,
+        Appointment.appointment_date <= day_end
+    ).all()
+    
+    slots = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"]
+    booked_slots = [appt.appointment_date.strftime('%H:%M') for appt in appointments]
+    schedule = [{"time": slot, "available": slot not in booked_slots} for slot in slots]
+    return jsonify(schedule)
+
 if __name__ == '__main__':
     # Run locally with Flask-SocketIO's development server
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)

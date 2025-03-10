@@ -33,7 +33,7 @@ export class SchedulePage {
     this.daysOfWeek = [];
     const start = new Date(this.currentWeekStart);
     start.setHours(0, 0, 0, 0); // Start at midnight
-    for (let i = 0; i < 6; i++) { // 6 days (Mon-Sat)
+    for (let i = 0; i < 7; i++) { // 6 days (Mon-Sat)
       const day = new Date(start);
       day.setDate(start.getDate() + i);
       this.daysOfWeek.push(day);
@@ -46,7 +46,7 @@ export class SchedulePage {
       this.doctorService.getDoctorAppointments(this.doctorId).subscribe({
         next: (data) => {
           const weekStart = this.daysOfWeek[0];
-          const weekEnd = new Date(this.daysOfWeek[5]);
+          const weekEnd = new Date(this.daysOfWeek[6]);
           weekEnd.setDate(weekEnd.getDate() + 1);
           weekEnd.setHours(0, 0, 0, 0);
 

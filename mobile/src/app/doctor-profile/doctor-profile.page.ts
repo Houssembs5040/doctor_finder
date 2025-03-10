@@ -4,7 +4,7 @@ import { DoctorService } from '../services/doctor.service';
 import { AuthService } from '../services/auth.service';
 import { ToastController, ModalController } from '@ionic/angular';
 import { Platform } from '@ionic/angular';
-import { BookingModalComponent } from '../booking-modal/booking-modal.component';
+import { DayScheduleModalComponent } from '../day-schedule-modal/day-schedule-modal.component';
 
 @Component({
   selector: 'app-doctor-profile',
@@ -19,24 +19,26 @@ export class DoctorProfilePage {
   isFavorite: boolean = false;
   isOwnProfile: boolean = false;
   showMoreActions: boolean = false;
+  currentWeek: { date: string; isAvailable: boolean }[] = []; // Changed date to string to match API
+  selectedDay: string | null = null; // Changed to string to match API date format
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private doctorService: DoctorService,
-    private authService: AuthService, // Still private
+    private authService: AuthService,
     private toastController: ToastController,
     private platform: Platform,
     private modalController: ModalController
   ) {}
 
-  // Public method to expose login status
   public isLoggedIn(): boolean {
     return this.authService.isLoggedIn();
   }
 
   ionViewWillEnter() {
     this.loadDoctor();
+    // Removed loadCurrentWeek() call; fetchWeeklyAvailability handles it now
   }
 
   async loadDoctor() {
@@ -50,6 +52,7 @@ export class DoctorProfilePage {
           this.checkIfOwnProfile();
           if (this.authService.isLoggedIn()) {
             this.fetchDoctorUserId(parseInt(doctorId, 10));
+            this.fetchWeeklyAvailability(parseInt(doctorId, 10)); // Load today + 6 days
           } else {
             this.loading = false;
           }
@@ -81,11 +84,63 @@ export class DoctorProfilePage {
     });
   }
 
+  fetchWeeklyAvailability(doctorId: number) {
+    this.doctorService.getWeeklyAvailability(doctorId).subscribe({
+      next: (availability) => {
+        this.currentWeek = availability.map((day: any) => ({
+          date: day.date, // ISO string from API (e.g., "2025-03-07")
+          isAvailable: day.is_available
+        }));
+      },
+      error: (err) => {
+        console.error('Error fetching weekly availability:', err);
+        this.presentToast('Failed to load availability', 'danger');
+        this.currentWeek = []; // Clear on error to avoid stale data
+      }
+    });
+  }
+
+  // Removed loadCurrentWeek() since API now provides today + 6 days
+
+  async openDaySchedule(day: { date: string; isAvailable: boolean }) {
+    if (!this.authService.isLoggedIn()) {
+      this.presentToast('Please log in to book an appointment', 'warning');
+      return;
+    }
+    if (this.isOwnProfile) {
+      this.presentToast('You cannot book an appointment with yourself', 'warning');
+      return;
+    }
+    if (!day.isAvailable) {
+      this.presentToast('No available appointments on this day', 'warning');
+      return;
+    }
+
+    this.selectedDay = day.date;
+    const modal = await this.modalController.create({
+      component: DayScheduleModalComponent,
+      componentProps: {
+        doctorId: this.doctor.id,
+        doctorName: this.doctor.name,
+        selectedDate: this.selectedDay // Pass as ISO string
+      }
+    });
+
+    modal.onDidDismiss().then((result) => {
+      if (result.data?.booked) {
+        this.presentToast('Appointment booked successfully', 'success');
+        this.fetchWeeklyAvailability(this.doctor.id); // Refresh availability
+      }
+    });
+
+    await modal.present();
+  }
+
   checkFavoriteStatus() {
     if (this.authService.isLoggedIn() && this.doctor) {
       this.doctorService.getFavorites().subscribe({
         next: (favorites) => {
-          this.isFavorite = favorites.some(fav => fav.id === this.doctor.id);
+          this.isFavorite = favorites.some((fav: any) => fav.id === this.doctor.id);
         },
         error: (err) => {
           console.error('Error checking favorites:', err);
@@ -198,33 +253,6 @@ export class DoctorProfilePage {
     } else {
       this.presentToast('No phone number available for this doctor', 'warning');
     }
-  }
-
-  async bookAppointment() {
-    if (!this.authService.isLoggedIn()) {
-      this.presentToast('Please log in to book an appointment', 'warning');
-      return;
-    }
-    if (this.isOwnProfile) {
-      this.presentToast('You cannot book an appointment with yourself', 'warning');
-      return;
-    }
-
-    const modal = await this.modalController.create({
-      component: BookingModalComponent,
-      componentProps: {
-        doctorId: this.doctor.id,
-        doctorName: this.doctor.name
-      }
-    });
-
-    modal.onDidDismiss().then((result) => {
-      if (result.data && result.data.booked) {
-        this.presentToast('Appointment booked successfully', 'success');
-      }
-    });
-
-    await modal.present();
   }
 
   toggleActions() {

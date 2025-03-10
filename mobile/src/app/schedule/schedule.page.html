@@ -43,7 +43,7 @@
         <ion-col size="2" class="time-col">
           <ion-label>Time</ion-label>
         </ion-col>
-        <ion-col *ngFor="let day of daysOfWeek" size="10/6" class="day-header">
+        <ion-col *ngFor="let day of daysOfWeek" size="10/7" class="day-header">
           <ion-label>{{ day | date:'EEE' | slice:0:2 }}<br>{{ day | date:'d' }}</ion-label>
         </ion-col>
       </ion-row>
@@ -53,7 +53,7 @@
         <ion-col size="2" class="time-slot">
           <ion-label>{{ hour }}</ion-label>
         </ion-col>
-        <ion-col *ngFor="let day of daysOfWeek" size="10/6" class="appointment-slot">
+        <ion-col *ngFor="let day of daysOfWeek" size="10/7" class="appointment-slot">
           <div
             [ngClass]="getSlotClass(day, hour)"
             class="slot-content"

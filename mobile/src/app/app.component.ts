@@ -5,6 +5,8 @@ import { Renderer2 } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import { Platform } from '@ionic/angular';
+import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 
 @Component({
   selector: 'app-root',
@@ -15,7 +17,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 export class AppComponent implements OnInit {
   isLoggedIn: boolean = false;
   isDoctor: boolean = false;
-  currentRoute: string = '/home'; // Default to home
+  currentRoute: string = '/home'; 
 
   regularUserTabs = [
     { title: 'Home', url: '/home', icon: 'home' },
@@ -52,7 +54,8 @@ export class AppComponent implements OnInit {
     private authService: AuthService,
     private menuCtrl: MenuController,
     private renderer: Renderer2,
-    private router: Router
+    private router: Router,
+    private platform: Platform
   ) {
     this.initializeApp();
   }
@@ -64,7 +67,7 @@ export class AppComponent implements OnInit {
       console.log('isLoggedIn$ updated:', isLoggedIn);
       this.isLoggedIn = isLoggedIn;
       this.isDoctor = this.authService.isDoctor();
-      this.updateRouteAfterAuthChange(); // Update route when auth changes
+      this.updateRouteAfterAuthChange(); 
     });
 
     // Subscribe to router events
@@ -79,6 +82,8 @@ export class AppComponent implements OnInit {
     this.currentRoute = this.router.url || '/home';
     console.log('Initial route:', this.currentRoute);
   }
+
+  
 
   loadThemePreference() {
     const savedTheme = localStorage.getItem('isDarkMode');
@@ -114,19 +119,34 @@ export class AppComponent implements OnInit {
     this.router.navigate([tabUrl]); // Ensure navigation occurs
   }
 
-  // Handle route updates after auth state changes
   private updateRouteAfterAuthChange() {
     if (!this.isLoggedIn) {
-      this.currentRoute = '/home'; // Default to home when logged out
+      this.currentRoute = '/home'; 
     } else if (!this.router.url || this.router.url === '/') {
-      this.currentRoute = this.isDoctor ? '/home' : '/home'; // Default based on role
+      this.currentRoute = this.isDoctor ? '/home' : '/home'; 
       this.router.navigate([this.currentRoute]);
     } else {
-      this.currentRoute = this.router.url; // Keep current route if valid
+      this.currentRoute = this.router.url; 
     }
     console.log('Route updated after auth change:', this.currentRoute);
   }
   async initializeApp() {
+    if (this.platform.is('android')) {
+       
+    }
+    
+    this.platform.ready().then(async () => {
+      if (this.platform.is('android')) {
+        // Prevent status bar from overlaying content
+        await StatusBar.setOverlaysWebView({ overlay: false });
+        // Set status bar style (optional: light for dark backgrounds, dark for light)
+        await StatusBar.setStyle({ style: Style.Dark });
+        // Optional: Set a background color for the status bar
+        await StatusBar.setBackgroundColor({ color: '#1e90ff' }); // Matches --ion-accent-color
+
+        await Keyboard.setResizeMode({ mode: KeyboardResize.Ionic });
+      }
+    });
     try {
       await StatusBar.setStyle({ style: Style.Dark });       // White text/icons
       await StatusBar.setBackgroundColor({ color: '#3880ff' }); // Blue background

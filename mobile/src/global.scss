@@ -35,3 +35,31 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import "@ionic/angular/css/palettes/dark.system.css";
+
+:root {
+    --ion-safe-area-top: 20px;
+    --ion-safe-area-bottom: 20px;
+  }
+  
+  // Apply padding to ion-content
+  ion-content {
+    --padding-top: var(--ion-safe-area-top, 0);
+    --padding-bottom: var(--ion-safe-area-bottom, 0);
+  }
+  
+  // For fixed elements (if needed)
+  .safe-area-padding {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  // Force inputs to stay above the keyboard
+ion-content {
+    --keyboard-offset: 0px; // Allow Ionic to handle this dynamically
+  }
+  
+  // Add padding to inputs when the keyboard is open
+  .keyboard-open {
+    ion-content {
+      --padding-bottom: calc(env(safe-area-inset-bottom) + 20px); // Extra padding
+    }
+  }

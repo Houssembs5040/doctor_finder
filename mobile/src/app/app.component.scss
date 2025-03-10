@@ -33,10 +33,10 @@ ion-tab-button {
   }
 
   &.selected {
-    color: #1e90ff; /* Blue for selected tab */
+    color: #1e90ff; 
     ion-icon,
     ion-label {
-      color: #1e90ff; /* Ensure both turn blue */
+      color: #1e90ff; 
     }
   }
 }

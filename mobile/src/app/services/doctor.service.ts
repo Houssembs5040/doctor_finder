@@ -192,5 +192,14 @@ getUserByDoctorId(doctorId: number): Observable<any> {
     })
   );
 }
+getWeeklyAvailability(doctorId: number): Observable<any> {
+  return this.http.get(`${this.apiUrl}/doctors/${doctorId}/availability/week`);
+}
+
+getDaySchedule(doctorId: number, date: string): Observable<any> {
+  return this.http.get(`${this.apiUrl}/doctors/${doctorId}/availability/day?date=${date}`);
+}
+
+
 
 }

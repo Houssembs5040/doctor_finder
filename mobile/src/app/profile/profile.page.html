@@ -102,6 +102,16 @@
           <ion-label class="label-value">{{ user.email }}</ion-label>
         </ion-item>
       </ion-list>
+      <!-- Added Message Button -->
+      <ion-button 
+        expand="block" 
+        color="primary" 
+        [routerLink]="['/messages']" 
+        [queryParams]="{ user_id: viewedUserId }"
+        style="margin-top: 20px;">
+        <ion-icon name="chatbubble-outline" slot="start"></ion-icon>
+        Message Patient
+      </ion-button>
     </ion-card-content>
   </ion-card>
 </ion-content>

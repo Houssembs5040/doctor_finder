@@ -23,7 +23,7 @@ app.config['JWT_SECRET_KEY'] = 'your-secret-key-here'
 
 db = SQLAlchemy(app)
 
-# Doctor model
+# Doctor model (unchanged)
 class Doctor(db.Model):
     __tablename__ = 'doctors'
     id = db.Column(db.Integer, primary_key=True)
@@ -47,6 +47,7 @@ class Doctor(db.Model):
             'phone': self.phone or ''
         }
 
+# User model (unchanged)
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -67,7 +68,7 @@ class User(db.Model):
             'doctor_id': self.doctor_id
         }
 
-# Message model (single definition)
+# Message model (unchanged)
 class Message(db.Model):
     __tablename__ = 'messages'
     __table_args__ = {'extend_existing': True}
@@ -78,7 +79,7 @@ class Message(db.Model):
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_read = db.Column(db.Boolean, default=False)
 
-# Appointment model
+# Appointment model (unchanged)
 class Appointment(db.Model):
     __tablename__ = 'appointments'
     id = db.Column(db.Integer, primary_key=True)
@@ -96,7 +97,7 @@ class Appointment(db.Model):
             'status': self.status
         }
 
-# Favorite model
+# Favorite model (unchanged)
 class Favorite(db.Model):
     __tablename__ = 'favorites'
     id = db.Column(db.Integer, primary_key=True)
@@ -110,6 +111,7 @@ class Favorite(db.Model):
             'doctor_id': self.doctor_id
         }
 
+# Database initialization (unchanged)
 with app.app_context():
     db.create_all()
     user = db.session.get(User, User.query.filter_by(email='john.doe@example.com').first().id if User.query.filter_by(email='john.doe@example.com').first() else None)
@@ -126,7 +128,7 @@ with app.app_context():
         db.session.add(sample_user)
         db.session.commit()
 
-# Public endpoints (no token required)
+# Public endpoints (unchanged)
 @app.route('/api/doctors', methods=['GET'])
 def get_doctors():
     doctors = Doctor.query.all()
@@ -139,7 +141,7 @@ def get_doctor_by_id(id):
         return jsonify(doctor.to_dict())
     return jsonify({'message': 'Doctor not found'}), 404
 
-# Login endpoint (POST)
+# Login endpoint (unchanged)
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -153,7 +155,7 @@ def login():
         return jsonify({'message': 'Login successful', 'user': user.to_dict(), 'access_token': access_token}), 200
     return jsonify({'message': 'Invalid email or password'}), 401
 
-# Register endpoint (POST)
+# Register endpoint (unchanged)
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -172,7 +174,7 @@ def register():
     access_token = create_access_token(identity=str(new_user.id))
     return jsonify({'message': 'Registration successful', 'user': new_user.to_dict(), 'access_token': access_token}), 201
 
-# Protected endpoints (require JWT)
+# Protected endpoints (unchanged except for the modified ones below)
 @app.route('/api/appointments', methods=['POST'])
 @jwt_required()
 def get_appointments():
@@ -259,7 +261,7 @@ def book_appointment():
     current_user_id = int(get_jwt_identity())
     data = request.get_json()
     doctor_id = data.get('doctor_id')
-    appointment_date = datetime.strptime(data.get('appointment_date'), '%Y-%m-%dT%H:%M:%S')
+    appointment_date = datetime.strptime(data.get('appointment_date'), '%Y-%m-%d %H:%M')
 
     if not doctor_id or not appointment_date:
         return jsonify({'message': 'doctor_id and appointment_date are required'}), 400
@@ -373,7 +375,7 @@ def remove_favorite():
         return jsonify({'message': 'Doctor removed from favorites'}), 200
     return jsonify({'message': 'Doctor not found in favorites'}), 404
 
-# SocketIO event handlers
+# SocketIO event handlers (unchanged)
 @socketio.on('connect')
 def handle_connect():
     logger.info('Client connected')
@@ -403,7 +405,7 @@ def handle_join(user_id, auth=None):
         logger.error(f"Error verifying token: {e}")
         emit('error', {'message': 'Authentication failed'})
 
-# Send a message
+# Send a message (unchanged)
 @app.route('/api/messages/send', methods=['POST'])
 @jwt_required()
 def send_message():
@@ -448,7 +450,7 @@ def send_message():
     logger.info(f"Message sent from {current_user_id} to {receiver_id}")
     return jsonify({'message': 'Message sent successfully', 'message_id': new_message.id}), 201
 
-# Get messages between current user and another user
+# Get messages between current user and another user (unchanged)
 @app.route('/api/messages', methods=['POST'])
 @jwt_required()
 def get_messages():
@@ -474,7 +476,7 @@ def get_messages():
         'is_read': msg.is_read
     } for msg in messages])
 
-# Mark messages as read
+# Mark messages as read (unchanged)
 @app.route('/api/messages/mark-read', methods=['POST'])
 @jwt_required()
 def mark_messages_read():
@@ -499,7 +501,7 @@ def mark_messages_read():
     logger.info(f"Messages from {other_user_id} to {current_user_id} marked as read")
     return jsonify({'message': 'Messages marked as read'}), 200
 
-# Get conversations
+# Get conversations (unchanged)
 @app.route('/api/messages/conversations', methods=['GET'])
 @jwt_required()
 def get_conversations():
@@ -566,6 +568,61 @@ def get_user_by_doctor_id():
         'is_doctor': user.is_doctor,
         'doctor_id': user.doctor_id
     }), 200
+
+@app.route('/api/doctors/<int:doctor_id>/availability/week', methods=['GET'])
+@jwt_required()
+def get_weekly_availability(doctor_id):
+    today = datetime.today()  # Start from today
+    week_start = today.replace(hour=0, minute=0, second=0, microsecond=0)  # Midnight today
+    week_end = week_start + timedelta(days=7, hours=23, minutes=59, seconds=59)  # 6 days ahead
+    
+    appointments = Appointment.query.filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.appointment_date >= week_start,
+        Appointment.appointment_date <= week_end
+    ).all()
+    
+    availability = []
+    slots = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"]
+    for day_offset in range(8):
+        day = week_start + timedelta(days=day_offset)
+        day_start = day.replace(hour=0, minute=0, second=0)
+        day_end = day.replace(hour=23, minute=59, second=59)
+        day_appointments = [appt for appt in appointments if appt.appointment_date >= day_start and appt.appointment_date <= day_end]
+        booked_slots = [appt.appointment_date.strftime('%H:%M') for appt in day_appointments]
+        is_available = any(slot not in booked_slots for slot in slots)
+        availability.append({
+            "date": day.date().isoformat(),
+            "is_available": is_available
+        })
+    
+    return jsonify(availability)
+
+@app.route('/api/doctors/<int:doctor_id>/availability/day', methods=['GET'])
+@jwt_required()
+def get_day_schedule(doctor_id):
+    date_str = request.args.get('date')
+    if not date_str:
+        return jsonify({'message': 'date parameter is required'}), 400
+    
+    try:
+        day = datetime.strptime(date_str, '%Y-%m-%d')
+    except ValueError:
+        return jsonify({'message': 'Invalid date format, use YYYY-MM-DD'}), 400
+    
+    day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+    day_end = day.replace(hour=23, minute=59, second=59, microsecond=999999)
+    
+    appointments = Appointment.query.filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.appointment_date >= day_start,
+        Appointment.appointment_date <= day_end
+    ).all()
+    
+    slots = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"]
+    booked_slots = [appt.appointment_date.strftime('%H:%M') for appt in appointments]
+    schedule = [{"time": slot, "available": slot not in booked_slots} for slot in slots]
+    return jsonify(schedule)
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)

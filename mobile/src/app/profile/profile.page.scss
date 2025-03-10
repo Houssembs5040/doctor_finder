@@ -1,8 +1,4 @@
-ion-header {
-  --background: var(--ion-toolbar-background);
-  --color: var(--ion-text-color);
-  padding-top: 25px; /* Pushes header below status bar */
-}
+
 ion-content {
   --background: var(--ion-background-color);
 }
@@ -122,7 +118,6 @@ ion-card:not(.doctor-own-card):not(.patient-profile-card) {
   }
 }
 
-/* Beautified Patient Profile Styling (Mode 3) */
 .patient-profile-card {
   background: var(--ion-card-background);
   border-radius: 16px;
@@ -201,6 +196,22 @@ ion-card:not(.doctor-own-card):not(.patient-profile-card) {
         &:hover .info-icon {
           transform: scale(1.1);
         }
+      }
+    }
+
+    /* Added button styling */
+    ion-button {
+      --border-radius: 8px;
+      --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin: 20px 0 0 0;
+      font-weight: 500;
+      
+      ion-icon {
+        margin-right: 8px;
+      }
+      
+      &:hover {
+        --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       }
     }
   }

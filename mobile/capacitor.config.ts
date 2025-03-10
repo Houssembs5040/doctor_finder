@@ -1,4 +1,5 @@
 import { CapacitorConfig } from '@capacitor/cli';
+import { KeyboardResize } from '@capacitor/keyboard';
 
 const config: CapacitorConfig = {
   appId: 'com.example.doctorfinder',
@@ -11,10 +12,12 @@ const config: CapacitorConfig = {
       overlaysWebView: false,
     },
     Keyboard: {
-      resize: 'ionic' // Automatically resize content above keyboard
+      resize: KeyboardResize.Ionic ,
+      resizeOnFullScreen: true,
     }
   },
   android: {
+    
     appendUserAgent: 'DoctorFinderApp',
     backgroundColor: '#3880ff'
   }
